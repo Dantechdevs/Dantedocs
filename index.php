@@ -1,22 +1,16 @@
 <?php
 // index.php
+
+// Define app name
+define('APP_NAME', 'DanteDocs');
+
+// Load config and database
+require_once __DIR__ . '/php/config.php';
 require_once __DIR__ . '/php/db_connect.php';
-?>
-<!doctype html>
-<html lang="en">
 
-<head>
-    <meta charset="utf-8">
-    <title><?= APP_NAME ?> — Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+// Optional: Session start for future login handling
+session_start();
 
-<body class="bg-light">
-    <div class="container py-5">
-        <h1>Welcome to <?= APP_NAME ?></h1>
-        <p>This is the initial dashboard. Authentication will be added later.</p>
-        <a href="pages/dashboard.php" class="btn btn-primary">Go to Dashboard</a>
-    </div>
-</body>
-
-</html>
+// For now, redirect directly to dashboard
+header("Location: pages/dashboard.php");
+exit;

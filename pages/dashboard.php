@@ -7,7 +7,8 @@ require_once __DIR__ . '/../php/db_connect.php'; // expects $pdo (PDO instance)
 $user_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'Admin';
 
 // helper attempts to fetch counts; tries multiple table names if needed
-function fetchCount($pdo, array $queries) {
+function fetchCount($pdo, array $queries)
+{
     foreach ($queries as $q) {
         try {
             $stmt = $pdo->query($q);
@@ -316,6 +317,54 @@ $storage_percent = round(($storage_used_gb / $storage_total_gb) * 100);
         color: #fff;
         border: none;
     }
+
+    /* 🌞 Light Mode (default) */
+    body {
+        background-color: #f8f9fa;
+        color: #212529;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .card,
+    .table,
+    .navbar,
+    #sidebar {
+        background-color: #ffffff;
+        color: #212529;
+        transition: all 0.3s;
+    }
+
+    /* 🌙 Dark Mode */
+    body.dark {
+        background-color: #121212;
+        color: #e4e4e4;
+    }
+
+    body.dark .card,
+    body.dark .table,
+    body.dark .navbar,
+    body.dark #sidebar {
+        background-color: #1e1e1e;
+        color: #e4e4e4;
+    }
+
+    body.dark a {
+        color: #00bcd4;
+    }
+
+    body.dark .btn-outline-secondary {
+        color: #e4e4e4;
+        border-color: #e4e4e4;
+    }
+
+    body.dark .btn-outline-secondary:hover {
+        background-color: #00bcd4;
+        color: #000;
+    }
+
+    body.dark .text-muted {
+        color: #b0b0b0 !important;
+    }
     </style>
 </head>
 
@@ -533,31 +582,31 @@ $storage_percent = round(($storage_used_gb / $storage_total_gb) * 100);
                                 </thead>
                                 <tbody>
                                     <?php
-                // fetch up to 10 recent logs if table exists
-                try {
-                    $recent = $pdo->query("SELECT dl.id, COALESCE(d.title,dl.document_id) AS doc_title, COALESCE(u.name, dl.user_id) AS user_name, dl.action, dl.timestamp
+                                    // fetch up to 10 recent logs if table exists
+                                    try {
+                                        $recent = $pdo->query("SELECT dl.id, COALESCE(d.title,dl.document_id) AS doc_title, COALESCE(u.name, dl.user_id) AS user_name, dl.action, dl.timestamp
                                             FROM document_logs dl
                                             LEFT JOIN documents d ON dl.document_id = d.id
                                             LEFT JOIN users u ON dl.user_id = u.id
                                             ORDER BY dl.timestamp DESC LIMIT 10");
-                    $i = 1;
-                    while ($row = $recent->fetch(PDO::FETCH_ASSOC)) {
-                        echo "<tr>";
-                        echo "<td>{$i}</td>";
-                        echo "<td>" . htmlspecialchars($row['doc_title']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['user_name']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['action']) . "</td>";
-                        echo "<td>" . htmlspecialchars(date("d M Y H:i", strtotime($row['timestamp']))) . "</td>";
-                        echo "</tr>";
-                        $i++;
-                    }
-                    if ($i === 1) {
-                        echo "<tr><td colspan='5' class='text-muted'>No recent activity found.</td></tr>";
-                    }
-                } catch (PDOException $e) {
-                    echo "<tr><td colspan='5' class='text-muted'>Recent logs not available.</td></tr>";
-                }
-                ?>
+                                        $i = 1;
+                                        while ($row = $recent->fetch(PDO::FETCH_ASSOC)) {
+                                            echo "<tr>";
+                                            echo "<td>{$i}</td>";
+                                            echo "<td>" . htmlspecialchars($row['doc_title']) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['user_name']) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['action']) . "</td>";
+                                            echo "<td>" . htmlspecialchars(date("d M Y H:i", strtotime($row['timestamp']))) . "</td>";
+                                            echo "</tr>";
+                                            $i++;
+                                        }
+                                        if ($i === 1) {
+                                            echo "<tr><td colspan='5' class='text-muted'>No recent activity found.</td></tr>";
+                                        }
+                                    } catch (PDOException $e) {
+                                        echo "<tr><td colspan='5' class='text-muted'>Recent logs not available.</td></tr>";
+                                    }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
@@ -578,164 +627,189 @@ $storage_percent = round(($storage_used_gb / $storage_total_gb) * 100);
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script>
-    // Elements
-    const sidebar = document.getElementById('sidebar');
-    const btnHamb = document.getElementById('btnHamb');
-    const overlay = document.getElementById('overlay');
-    const app = document.getElementById('app');
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-
-    // Sidebar open/close for mobile (slide-over)
-    function openSidebar() {
-        sidebar.classList.add('open');
-        sidebar.classList.remove('hidden');
-        overlay.classList.add('show');
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        sidebar.classList.add('hidden');
-        overlay.classList.remove('show');
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-
-    btnHamb.addEventListener('click', () => {
-        // if already open, close
-        if (sidebar.classList.contains('open')) closeSidebar();
-        else openSidebar();
-    });
-
-    overlay.addEventListener('click', closeSidebar);
-    window.addEventListener('resize', () => {
-        // ensure overlay removed on resize to desktop
-        if (window.innerWidth > 991) {
-            overlay.classList.remove('show');
-            overlay.style.display = 'none';
-            sidebar.classList.remove('hidden');
-            sidebar.classList.remove('open');
-            document.body.style.overflow = '';
-        } else {
-            sidebar.classList.add('hidden');
-        }
-    });
-
-    // Theme persistent toggle
-    function applyTheme(dark) {
-        if (dark) {
-            document.body.classList.add('dark');
-            themeIcon.className = 'fa-solid fa-sun';
-        } else {
-            document.body.classList.remove('dark');
-            themeIcon.className = 'fa-solid fa-moon';
-        }
-        // Update chart colors later via observer
-    }
-
-    // Init from storage
-    const saved = localStorage.getItem('dante_theme');
-    applyTheme(saved === 'dark');
-
-    themeToggle.addEventListener('click', () => {
-        const isDark = document.body.classList.contains('dark');
-        applyTheme(!isDark);
-        localStorage.setItem('dante_theme', !isDark ? 'dark' : 'light');
-    });
-
-    // greeting & clock
-    function updateGreeting() {
-        const now = new Date();
-        const h = now.getHours();
-        let greet = 'Hello';
-        if (h >= 5 && h < 12) greet = 'Good morning';
-        else if (h >= 12 && h < 17) greet = 'Good afternoon';
-        else if (h >= 17 && h < 21) greet = 'Good evening';
-        else greet = 'Good night';
-        document.getElementById('greeting').innerHTML =
-            `👋 ${greet}, <?php echo addslashes(htmlspecialchars($user_name)); ?>!`;
-        document.getElementById('clock').innerText = now.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-    updateGreeting();
-    setInterval(updateGreeting, 30000);
-
-    // Chart (Uploads per month sample)
-    const ctx = document.getElementById('uploadChart').getContext('2d');
-
-    function chartColors() {
-        const isDark = document.body.classList.contains('dark');
-        return {
-            border: isDark ? '#00bcd4' : '#007bff',
-            bg: isDark ? 'rgba(0,188,212,0.18)' : 'rgba(0,123,255,0.12)',
-            ticks: isDark ? '#cfeef8' : '#1f2937'
-        };
-    }
-
-    let uploadsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Uploads',
-                data: [12, 18, 14, 22], // replace with real aggregated data if desired
-                borderColor: chartColors().border,
-                backgroundColor: chartColors().bg,
-                fill: true,
-                tension: 0.35,
-                pointRadius: 3
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    ticks: {
-                        color: chartColors().ticks
-                    },
-                    beginAtZero: true
-                },
-                x: {
-                    ticks: {
-                        color: chartColors().ticks
-                    }
-                }
-            },
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-
-    // Keep chart colors in sync with theme changes
-    const mo = new MutationObserver(() => {
-        const colors = chartColors();
-        uploadsChart.data.datasets[0].borderColor = colors.border;
-        uploadsChart.data.datasets[0].backgroundColor = colors.bg;
-        uploadsChart.options.scales.y.ticks.color = colors.ticks;
-        uploadsChart.options.scales.x.ticks.color = colors.ticks;
-        uploadsChart.update();
-        // storage bar color adjust
+    document.addEventListener('DOMContentLoaded', () => {
+        // ===== Elements =====
+        const sidebar = document.getElementById('sidebar');
+        const btnHamb = document.getElementById('btnHamb');
+        const overlay = document.getElementById('overlay');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const greetingEl = document.getElementById('greeting');
+        const clockEl = document.getElementById('clock');
         const storageBar = document.getElementById('storageBar');
-        if (storageBar) storageBar.style.backgroundColor = document.body.classList.contains('dark') ?
-            '#00bcd4' : '#007bff';
-    });
-    mo.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class']
-    });
+        const uploadChartEl = document.getElementById('uploadChart');
 
-    // set initial storage bar color
-    document.getElementById('storageBar').style.backgroundColor = document.body.classList.contains('dark') ? '#00bcd4' :
-        '#007bff';
+        // ===== Sidebar =====
+        const sidebarUtils = {
+            open() {
+                sidebar.classList.add('open');
+                sidebar.classList.remove('hidden');
+                overlay.classList.add('show');
+                overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            },
+            close() {
+                sidebar.classList.remove('open');
+                sidebar.classList.add('hidden');
+                overlay.classList.remove('show');
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            },
+            toggle() {
+                sidebar.classList.contains('open') ? this.close() : this.open();
+            },
+            handleResize() {
+                if (window.innerWidth > 991) {
+                    this.close();
+                    sidebar.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('hidden');
+                }
+            }
+        };
+
+        btnHamb.addEventListener('click', () => sidebarUtils.toggle());
+        overlay.addEventListener('click', () => sidebarUtils.close());
+        window.addEventListener('resize', () => sidebarUtils.handleResize());
+        sidebarUtils.handleResize(); // initial setup
+
+        // ===== Theme =====
+        const themeUtils = {
+            isDark: localStorage.getItem('dante_theme') === 'dark',
+            apply(dark) {
+                document.body.classList.toggle('dark', dark);
+                themeIcon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                if (storageBar) storageBar.style.backgroundColor = dark ? '#00bcd4' : '#007bff';
+                localStorage.setItem('dante_theme', dark ? 'dark' : 'light');
+                this.isDark = dark;
+                updateChartColors();
+            },
+            toggle() {
+                this.apply(!this.isDark);
+            }
+        };
+
+        themeToggle.addEventListener('click', () => themeUtils.toggle());
+        themeUtils.apply(themeUtils.isDark);
+
+        // ===== Greeting & Clock =====
+        const updateGreeting = () => {
+            const now = new Date();
+            const h = now.getHours();
+            let greet = 'Hello';
+            if (h >= 5 && h < 12) greet = 'Good morning';
+            else if (h >= 12 && h < 17) greet = 'Good afternoon';
+            else if (h >= 17 && h < 21) greet = 'Good evening';
+            else greet = 'Good night';
+
+            greetingEl.innerHTML = `👋 ${greet}, <?php echo addslashes(htmlspecialchars($user_name)); ?>!`;
+            clockEl.innerText = now.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+        updateGreeting();
+        setInterval(updateGreeting, 30000);
+
+        // ===== Chart =====
+        const chartUtils = {
+            colors() {
+                const dark = document.body.classList.contains('dark');
+                return {
+                    border: dark ? '#00bcd4' : '#007bff',
+                    bg: dark ? 'rgba(0,188,212,0.18)' : 'rgba(0,123,255,0.12)',
+                    ticks: dark ? '#cfeef8' : '#1f2937'
+                };
+            },
+            createChart() {
+                const colors = this.colors();
+                return new Chart(uploadChartEl.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Uploads',
+                            data: [12, 18, 14, 22],
+                            borderColor: colors.border,
+                            backgroundColor: colors.bg,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: colors.ticks
+                                },
+                                beginAtZero: true
+                            },
+                            x: {
+                                ticks: {
+                                    color: colors.ticks
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            },
+            update(chart) {
+                const colors = this.colors();
+                chart.data.datasets[0].borderColor = colors.border;
+                chart.data.datasets[0].backgroundColor = colors.bg;
+                chart.options.scales.y.ticks.color = colors.ticks;
+                chart.options.scales.x.ticks.color = colors.ticks;
+                chart.update();
+            }
+        };
+
+        const uploadsChart = chartUtils.createChart();
+
+        // Observe theme changes to update chart automatically
+        const observer = new MutationObserver(() => chartUtils.update(uploadsChart));
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    });
     </script>
+    <script>
+    // Single source of truth for theme
+    const themeIcon = document.getElementById('themeIcon'); // if using the FA icon
+    const themeToggle = document.getElementById('themeToggle');
+
+    const themeUtils = {
+        isDark: localStorage.getItem('dante_theme') === 'dark',
+        apply(dark) {
+            document.body.classList.toggle('dark', dark); // toggles body.dark
+            if (themeIcon) themeIcon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            localStorage.setItem('dante_theme', dark ? 'dark' : 'light');
+            this.isDark = dark;
+            // optional: call updateChartColors() if you update charts
+            if (typeof updateChartColors === 'function') updateChartColors();
+        },
+        toggle() {
+            this.apply(!this.isDark);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // apply saved preference
+        themeUtils.apply(themeUtils.isDark);
+
+        // attach click if the button exists
+        if (themeToggle) themeToggle.addEventListener('click', () => themeUtils.toggle());
+    });
+    </script>
+
 </body>
 
 </html>

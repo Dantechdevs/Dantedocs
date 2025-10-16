@@ -5,7 +5,6 @@
     <div class="container">
         © 2025 - DANTE SOFTWARES LTD. All Rights Reserved.<br>
         Terms and Conditions apply. Contact: <a href="mailto:dantechdevs@gmail.com">dantechdevs@gmail.com</a><br>
-        Unauthorized use of this system is strictly prohibited.
     </div>
 </footer>
 
