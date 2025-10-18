@@ -4,7 +4,8 @@
 <footer class="footer mt-auto py-3 bg-light text-center text-muted small shadow-sm">
     <div class="container">
         © 2025 - DANTE SOFTWARES LTD. All Rights Reserved.<br>
-        Terms and Conditions apply. Contact: <a href="mailto:dantechdevs@gmail.com">dantechdevs@gmail.com</a><br>
+        Developed by <a href="https://dante.international" target="_blank" rel="noopener noreferrer">DANTE SOFTWARES
+            LTD.</a>
     </div>
 </footer>
 
