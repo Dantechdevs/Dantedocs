@@ -10,7 +10,7 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link" href="../pages/documents.php">
+                <a class="nav-link" href="pages/documents.php">
                     <i class="fas fa-file-alt"></i> Documents
                 </a>
             </li>

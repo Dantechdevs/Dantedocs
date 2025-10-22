@@ -1,16 +1,29 @@
 <?php
-// Demo: handle add department
+// php/add_department.php
+require_once __DIR__ . '/db.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo "Method not allowed";
-    exit;
+    json_response(['ok' => false, 'msg' => 'Invalid method'], 405);
 }
+
 $name = trim($_POST['name'] ?? '');
 if ($name === '') {
-    http_response_code(400);
-    echo "Department name required";
-    exit;
+    json_response(['ok' => false, 'msg' => 'Name required'], 400);
 }
-// In production: insert into departments table.
-// Demo: just return success.
-echo "Department '{$name}' added (demo)";
+
+try {
+    $pdo = getPDO();
+    $nameNormalized = mb_strtoupper($name);
+
+    $stmt = $pdo->prepare("SELECT id FROM departments WHERE name = :name LIMIT 1");
+    $stmt->execute([':name' => $nameNormalized]);
+    if ($stmt->fetch()) {
+        json_response(['ok' => true, 'msg' => 'Department already exists', 'exists' => true]);
+    }
+
+    $ins = $pdo->prepare("INSERT INTO departments (name, created_at) VALUES (:name, NOW())");
+    $ins->execute([':name' => $nameNormalized]);
+    json_response(['ok' => true, 'msg' => 'Department added', 'id' => $pdo->lastInsertId()]);
+} catch (Exception $e) {
+    json_response(['ok' => false, 'msg' => 'Server error: ' . $e->getMessage()], 500);
+}

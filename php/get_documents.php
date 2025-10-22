@@ -1,44 +1,88 @@
 <?php
 // php/get_documents.php
-header('Content-Type: text/html; charset=utf-8');
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+require_once __DIR__ . '/db.php';
 
-$now = time();
-$sample = [
-    [201, 'Staff Handbook.pdf', 'HR', 'Human Resources', 'Admin', date('c', $now - 3600 * 24 * 5), date('c', $now - 3600 * 4), 'v1.2'],
-    [202, 'Finance Q3.xlsx', 'Finance', 'Finance Dept', 'Tina', date('c', $now - 3600 * 48), date('c', $now - 1800), 'v1.0'],
-    [203, 'Procurement Policy.docx', 'Legal', 'Legal Dept', 'LawDept', date('c', $now - 3600 * 72), date('c', $now - 7200), 'v2.0'],
-    [204, 'Project Plan - Alpha.pdf', 'Reports', 'PMO', 'ProjectLead', date('c', $now - 600), date('c', $now - 300), 'v0.9'],
-    [205, 'Medical Guidelines.pdf', 'Education', 'Health Unit', 'Dr. O', date('c', $now - 3600 * 6), date('c', $now - 3600), 'v1.1'],
-];
+$page = max(1, (int)($_GET['page'] ?? 1));
+$limit = max(5, (int)($_GET['limit'] ?? 10));
+$offset = ($page - 1) * $limit;
+$search = trim($_GET['search'] ?? '');
+$format = strtolower(trim($_GET['format'] ?? 'html')); // html | json
 
-if ($search !== '') {
-    $sample = array_filter($sample, function ($r) use ($search) {
-        return stripos($r[1], $search) !== false || stripos($r[2], $search) !== false || stripos($r[3], $search) !== false;
-    });
+try {
+    $pdo = getPDO();
+
+    // Count total
+    $countSql = "SELECT COUNT(*) FROM documents WHERE 1=1";
+    $sql = "SELECT * FROM documents WHERE 1=1";
+    $params = [];
+
+    if ($search !== '') {
+        $filter = " AND (title LIKE :s OR category LIKE :s OR department LIKE :s)";
+        $countSql .= $filter;
+        $sql .= $filter;
+        $params[':s'] = "%$search%";
+    }
+
+    $stmt = $pdo->prepare($countSql);
+    $stmt->execute($params);
+    $total = (int)$stmt->fetchColumn();
+
+    $sql .= " ORDER BY created_at DESC LIMIT :offset, :limit";
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue($k, $v, PDO::PARAM_STR);
+    }
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll();
+
+    if ($format === 'json') {
+        json_response([
+            'ok' => true,
+            'data' => $rows,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'pages' => ceil($total / $limit)
+            ]
+        ]);
+    }
+
+    // HTML output (for your current front-end table)
+    if (!$rows) {
+        echo "<tr><td colspan='9' class='text-center text-muted'>No records found</td></tr>";
+        exit;
+    }
+
+    foreach ($rows as $i => $r) {
+        $id = htmlspecialchars($r['id']);
+        $title = htmlspecialchars($r['title']);
+        $cat = htmlspecialchars($r['category']);
+        $dept = htmlspecialchars($r['department']);
+        $uploaded_by = htmlspecialchars($r['uploaded_by']);
+        $created = htmlspecialchars($r['created_at']);
+        $updated = htmlspecialchars($r['updated_at']);
+        $version = htmlspecialchars($r['version']);
+        $filepath = htmlspecialchars($r['filepath']);
+        $downloadUrl = '../' . str_replace('\\', '/', $filepath);
+
+        echo "<tr data-id='{$id}'>
+            <td>" . ($offset + $i + 1) . "</td>
+            <td><strong>{$title}</strong></td>
+            <td>{$cat}</td>
+            <td>{$dept}</td>
+            <td>{$uploaded_by}</td>
+            <td>" . date('Y-m-d H:i', strtotime($created)) . "</td>
+            <td>" . date('Y-m-d H:i', strtotime($updated)) . "</td>
+            <td>{$version}</td>
+            <td>
+                <a class='btn btn-sm btn-outline-primary me-1' href='{$downloadUrl}' download><i class='fa fa-download'></i></a>
+                <button class='btn btn-sm btn-outline-danger delete-btn' data-id='{$id}'><i class='fa fa-trash'></i></button>
+            </td>
+        </tr>";
+    }
+} catch (Exception $e) {
+    echo "<tr><td colspan='9' class='text-danger'>Server error: {$e->getMessage()}</td></tr>";
 }
-
-$html = '';
-foreach ($sample as $r) {
-    list($id, $title, $category, $department, $by, $uploaded_at, $updated_at, $version) = $r;
-    $t = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
-    $cat = htmlspecialchars($category, ENT_QUOTES, 'UTF-8');
-    $dept = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
-    $by = htmlspecialchars($by, ENT_QUOTES, 'UTF-8');
-    $html .= "<tr data-id=\"{$id}\">";
-    $html .= "<td>{$id}</td>";
-    $html .= "<td>{$t}</td>";
-    $html .= "<td class='col-cat'>{$cat}</td>";
-    $html .= "<td class='col-dept'>{$dept}</td>";
-    $html .= "<td>{$by}</td>";
-    $html .= "<td data-updated=\"{$uploaded_at}\">" . date('Y-m-d H:i:s', strtotime($uploaded_at)) . "</td>";
-    $html .= "<td data-updated=\"{$updated_at}\">" . date('Y-m-d H:i:s', strtotime($updated_at)) . "</td>";
-    $html .= "<td>{$version}</td>";
-    $html .= "<td>
-    <button class='btn btn-sm btn-info' onclick=\"alert('View {$id}')\"><i class='fa-solid fa-eye'></i></button>
-    <button class='btn btn-sm btn-outline-secondary' onclick=\"alert('Download {$id}')\"><i class='fa-solid fa-download'></i></button>
-    <button class='btn btn-sm btn-outline-dark' onclick=\"alert('History {$id}')\"><i class='fa-solid fa-clock-rotate-left'></i></button>
-  </td>";
-    $html .= "</tr>\n";
-}
-echo $html;

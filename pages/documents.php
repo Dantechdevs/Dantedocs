@@ -721,7 +721,7 @@
             });
         }
         $('#btnAddCat, #btnAddCategory, #btnAddCategoryTop').on('click', () => promptAndPost('Add Category',
-            '../php/add_category.php'));
+            '/php/add_category.php'));
         $('#btnAddDept, #btnAddDepartment, #btnAddDepartmentTop').on('click', () => promptAndPost('Add Department',
             '../php/add_department.php'));
         $('#btnAddDept').on('click', () => promptAndPost('Add Department', '../php/add_department.php'));
