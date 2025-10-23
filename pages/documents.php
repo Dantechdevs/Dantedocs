@@ -698,56 +698,46 @@
                 }
             });
         });
-
         // -----------------------
-        // Add category / add department (prompt + demo POST)
+        // Add category / Add department (with backend + dropdown refresh)
         // -----------------------
-        function promptAndPost(title, endpoint) {
+        function promptAndPost(title, endpoint, type) {
             Swal.fire({
                 title,
                 input: 'text',
+                inputPlaceholder: 'Enter ' + type + ' name',
                 showCancelButton: true,
-                confirmButtonText: 'Add'
-            }).then(r => {
-                if (r.isConfirmed && r.value) {
+                confirmButtonText: 'Save'
+            }).then(result => {
+                if (result.isConfirmed && result.value.trim() !== '') {
                     $.post(endpoint, {
-                        name: r.value
+                        name: result.value.trim()
                     }, function(resp) {
-                        toast('Saved', 'success');
-                        loadDocuments();
-                        fillCategoryDeptSelects();
-                    });
+                        try {
+                            const data = JSON.parse(resp);
+                            if (data.success) {
+                                toast(type + ' added successfully', 'success');
+                                fillCategoryDeptSelects(); // reload dropdowns
+                                loadDocuments(); // refresh document list
+                            } else {
+                                toast(data.message || 'Error saving ' + type, 'error');
+                            }
+                        } catch (e) {
+                            toast('Server error: invalid response', 'error');
+                            console.error(resp);
+                        }
+                    }).fail(() => toast('Request failed', 'error'));
                 }
             });
         }
-        $('#btnAddCat, #btnAddCategory, #btnAddCategoryTop').on('click', () => promptAndPost('Add Category',
-            '/php/add_category.php'));
-        $('#btnAddDept, #btnAddDepartment, #btnAddDepartmentTop').on('click', () => promptAndPost('Add Department',
-            '../php/add_department.php'));
-        $('#btnAddDept').on('click', () => promptAndPost('Add Department', '../php/add_department.php'));
-        $('#btnAddCat').on('click', () => promptAndPost('Add Category', '../php/add_category.php'));
-        // top-left shortcuts
-        $('#btnAddDocument').on('click', () => {
-            $('html,body').animate({
-                scrollTop: $('.page-header').offset().top + 120
-            }, 300);
-            toast('Scroll to Upload form', 'info', 1200);
-        });
 
-        // -----------------------
-        // Import / Export / Print / Mock uploads
-        // -----------------------
-        $('#btnImport').on('click', () => toast('Import: UI only (implement backend)', 'info'));
-        $('#btnExport').on('click', () => toast('Export: UI only (implement backend)', 'info'));
-        $('#btnPrint').on('click', () => window.print());
-        $('#btnWifi').on('click', () => Swal.fire('Wi-Fi Upload (mock)',
-            'Requires pairing token & agent to upload from device.', 'info'));
-        $('#btnBT').on('click', () => Swal.fire('Bluetooth Upload (mock)',
-            'Requires companion agent to forward files to server.', 'info'));
+        // Button bindings
+        $('#btnAddCat').on('click', () => promptAndPost('Add New Category', '../php/add_category.php', 'Category'));
+        $('#btnAddDept').on('click', () => promptAndPost('Add New Department', '../php/add_department.php', 'Department'));
 
-        // End of script
-    </script>
 
-</body>
+        <
+        /body>
 
-</html>
+        <
+        /html>

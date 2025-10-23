@@ -5,16 +5,14 @@
     <div class="sidebar-sticky pt-4">
         <ul class="nav flex-column">
             <li class="nav-item mb-2">
-                <a class="nav-link active" href="pages/dashboard.php">
+                <a class="nav-link active" href="../pages/dashboard.php">
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link" href="pages/documents.php">
+                <a class="nav-link" href="../pages/documents.php">
                     <i class="fas fa-file-alt"></i> Documents
                 </a>
-            </li>
-
             </li>
             <li class="nav-item mb-2">
                 <a class="nav-link" href="../pages/document_categories.php">
@@ -39,7 +37,6 @@
         </ul>
     </div>
 </nav>
-
 <!-- 🌙 Theme Toggle Button -->
 <button id="themeToggle" class="btn btn-sm btn-outline-secondary"
     style="position: fixed; top: 15px; right: 15px; z-index: 999;">
@@ -132,5 +129,18 @@
     // Apply theme on page load
     document.addEventListener('DOMContentLoaded', () => {
         themeUtils.apply(themeUtils.isDark);
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const links = document.querySelectorAll('#sidebar .nav-link');
+        const path = window.location.pathname.split('/').pop();
+        links.forEach(link => {
+            if (link.getAttribute('href').includes(path)) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
     });
 </script>
